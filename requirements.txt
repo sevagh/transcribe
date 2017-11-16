@@ -1,0 +1,7 @@
+pafy
+pydub
+matplotlib
+youtube-dl
+cairocffi
+cffi
+numpy
