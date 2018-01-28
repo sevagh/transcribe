@@ -51,8 +51,7 @@ def transcribe(path):
 
 
 class _IteratorMedia:
-    all_notes = json.loads(urlopen(
-        'https://sevagh.github.io/notemap.json').read().decode('utf-8'))
+    all_notes = json.loads(open('./notemap.json').read())
 
     def __init__(self, file):
         self.filename = os.path.splitext(os.path.basename(file))[0]
