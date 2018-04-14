@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import array
 import json
 import os
 from collections import OrderedDict
@@ -15,9 +14,10 @@ from pydub.utils import get_array_type
 import matplotlib.pylab as plb
 import matplotlib.pyplot as plt
 import sys
+import numba
 
-plt.switch_backend('cairo')
-plb.switch_backend('cairo')
+[x.switch_backend('cairo') for x in [plb, plt]]
+np.seterr(divide='ignore', invalid='ignore')
 
 MS_INCREMENT = 100
 CUTOFF = 0.97
@@ -46,7 +46,8 @@ def transcribe(path):
             _IteratorMedia(urlopen(path)).plot_transcription()
         else:
             p = pafy.new(path)
-            file = p.getbestaudio(preftype='m4a').download(filepath=os.path.join(p.title, tempdir))
+            file = p.getbestaudio(preftype='m4a').download(
+                    filepath=os.path.join(p.title, tempdir))
             _IteratorMedia(file).plot_transcription()
 
 
@@ -58,8 +59,13 @@ class _IteratorMedia:
         sound = AudioSegment.from_file(file=file,
                                        format=file.split(
                                            '.')[1]).set_channels(1)
-        self.sound_raw = array.array(get_array_type(sound.sample_width * 8),
-                                     sound._data)
+        self.sound_raw = np.frombuffer(
+                sound._data,
+                dtype=get_array_type(
+                    sound.sample_width * 8)).astype(
+                            np.float64, copy=False)
+        self.sound_raw.setflags(write=1)
+
         self.raw_length = len(self.sound_raw)
         self.raw_increment = int(MS_INCREMENT *
                                  (len(self.sound_raw) /
@@ -93,6 +99,56 @@ def _get_note_name_from_pitch(pitch, all_notes):
     return list(all_notes.keys())[idx] if pitch != -1 else None
 
 
+@numba.jit(cache=True)
+def _nsdf(audio_buffer):
+    audio_buffer -= np.mean(audio_buffer)
+    autocorr_f = np.correlate(audio_buffer, audio_buffer, mode='full')
+    nsdf = np.true_divide(autocorr_f[int(autocorr_f.size/2):],
+                          autocorr_f[int(autocorr_f.size/2)])
+    nsdf[nsdf == np.inf] = 0
+    nsdf = np.nan_to_num(nsdf)
+    return nsdf
+
+
+@numba.jit(cache=True, nopython=True)
+def _peak_picking(nsdf):
+    pos = 0
+    cur_max_pos = 0
+
+    length_nsdf = len(nsdf)
+
+    while (pos < (length_nsdf - 1) / 3) and (nsdf[pos] > 0):
+        pos += 1
+
+    while (pos < length_nsdf - 1) and (nsdf[pos] <= 0.0):
+        pos += 1
+
+    if pos == 0:
+        pos = 1
+
+    max_positions = []
+    while pos < length_nsdf - 1:
+        if (nsdf[pos] > nsdf[pos - 1]) and (
+                nsdf[pos] >= nsdf[pos + 1]):
+            if cur_max_pos == 0 or\
+               nsdf[pos] > nsdf[cur_max_pos]:
+                cur_max_pos = pos
+            elif nsdf[pos] > nsdf[cur_max_pos]:
+                cur_max_pos = pos
+
+        pos += 1
+        if pos < length_nsdf - 1 and nsdf[pos] <= 0:
+            if cur_max_pos > 0:
+                max_positions.append(cur_max_pos)
+                cur_max_pos = 0
+            while pos < length_nsdf - 1 and nsdf[pos] <= 0:
+                pos += 1
+
+    if cur_max_pos > 0:
+        max_positions.append(cur_max_pos)
+    return max_positions
+
+
 class Mpm:
     def __init__(self):
         self._max_positions = []
@@ -104,19 +160,8 @@ class Mpm:
         self._period_estimates.clear()
         self._amp_estimates.clear()
 
-        def _nsdf(audio_buffer):
-            audio_buffer -= np.mean(audio_buffer)
-            autocorr_f = np.correlate(audio_buffer, audio_buffer, mode='full')
-            nsdf = None
-            with np.errstate(divide='ignore', invalid='ignore'):
-                nsdf = np.true_divide(autocorr_f[int(autocorr_f.size/2):],
-                                      autocorr_f[int(autocorr_f.size/2)])
-                nsdf[nsdf == np.inf] = 0
-                nsdf = np.nan_to_num(nsdf)
-            return nsdf
-
         self._nsdf = _nsdf(audio_buffer)
-        self._peak_picking()
+        self._max_positions = _peak_picking(self._nsdf)
 
         highest_amplitude = float('-inf')
 
@@ -161,41 +206,6 @@ class Mpm:
                 pitch = -1
 
         return pitch
-
-    def _peak_picking(self):
-        pos = 0
-        cur_max_pos = 0
-
-        length_nsdf = len(self._nsdf)
-
-        while (pos < (length_nsdf - 1) / 3) and (self._nsdf[pos] > 0):
-            pos += 1
-
-        while (pos < length_nsdf - 1) and (self._nsdf[pos] <= 0.0):
-            pos += 1
-
-        if pos == 0:
-            pos = 1
-
-        while pos < length_nsdf - 1:
-            if (self._nsdf[pos] > self._nsdf[pos - 1]) and (
-                    self._nsdf[pos] >= self._nsdf[pos + 1]):
-                if cur_max_pos == 0 or\
-                   self._nsdf[pos] > self._nsdf[cur_max_pos]:
-                    cur_max_pos = pos
-                elif self._nsdf[pos] > self._nsdf[cur_max_pos]:
-                    cur_max_pos = pos
-
-            pos += 1
-            if pos < length_nsdf - 1 and self._nsdf[pos] <= 0:
-                if cur_max_pos > 0:
-                    self._max_positions.append(cur_max_pos)
-                    cur_max_pos = 0
-                while pos < length_nsdf - 1 and self._nsdf[pos] <= 0:
-                    pos += 1
-
-        if cur_max_pos > 0:
-            self._max_positions.append(cur_max_pos)
 
 
 if __name__ == '__main__':
