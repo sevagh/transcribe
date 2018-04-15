@@ -59,9 +59,7 @@ dependencies:
   - numba=0.38.0rc1=np114py36hf484d3e_0
   - pip:
     - cairocffi==0.8.0
-    - pafy==0.5.4
     - profilehooks==1.10.0
     - pydub==0.21.0
-    - youtube-dl==2018.4.9
 prefix: /home/sevagh/miniconda3/envs/transcribe-venv
 

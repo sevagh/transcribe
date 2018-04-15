@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from urllib.request import urlopen
 import time
 import numpy
-import pafy
+import scipy.signal
 from pydub import AudioSegment
 from pydub.utils import get_array_type
 import matplotlib.pylab as plb
@@ -38,17 +38,6 @@ def plot_transcription_result(name, data_dict, all_notes):
     plt.xlabel('time (ms)', **font)
     plt.ylabel('note', rotation=0, labelpad=15, **font)
     plb.savefig('{0}.png'.format(time.strftime('%y%m%d%H%M%s')))
-
-
-def transcribe(path):
-    with TemporaryDirectory() as tempdir:
-        if path[:3] == 'file':
-            _IteratorMedia(urlopen(path)).plot_transcription()
-        else:
-            p = pafy.new(path)
-            file = p.getbestaudio(preftype='m4a').download(
-                    filepath=os.path.join(p.title, tempdir))
-            _IteratorMedia(file).plot_transcription()
 
 
 class _IteratorMedia:
@@ -102,7 +91,7 @@ def _get_note_name_from_pitch(pitch, all_notes):
 @numba.jit(cache=True)
 def _nsdf(audio_buffer):
     audio_buffer -= np.mean(audio_buffer)
-    autocorr_f = np.correlate(audio_buffer, audio_buffer, mode='full')
+    autocorr_f = scipy.signal.correlate(audio_buffer, audio_buffer)
     nsdf = np.true_divide(autocorr_f[int(autocorr_f.size/2):],
                           autocorr_f[int(autocorr_f.size/2)])
     nsdf[nsdf == np.inf] = 0
@@ -209,7 +198,8 @@ class Mpm:
 
 
 if __name__ == '__main__':
-    try:
-        transcribe(sys.argv[1])
-    except IndexError:
-        print('Rerun with url as first arg', file=sys.stderr)
+    with TemporaryDirectory() as tempdir:
+        try:
+            _IteratorMedia(sys.argv[1]).plot_transcription()
+        except IndexError:
+            print('Rerun with file path as first arg', file=sys.stderr)
