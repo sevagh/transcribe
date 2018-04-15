@@ -45,6 +45,7 @@ dependencies:
   - pytz=2018.3=py36_0
   - qt=5.9.4=h4e5bff0_0
   - readline=7.0=ha6073c6_4
+  - scipy=1.0.1=py36hfc37229_0
   - setuptools=39.0.1=py36_0
   - sip=4.19.8=py36hf484d3e_0
   - six=1.11.0=py36h372c433_1
