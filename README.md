@@ -12,6 +12,12 @@ Transcribe will chop the music up into time slices and detect the pitch of the r
 
 <img src="./samples/guitar_eadgbe_out.png" width=300px>
 
+## Performance
+
+After recent experiments, I cut the runtime of the McLeod Pitch Method implementation by more than half, by using Numba and Scipy.
+
+Read about them [here](http://sevag.xyz/post/snac2/) and [here](http://sevag.xyz/post/snac3/).
+
 ### System dependencies
 
 This project uses Conda.
