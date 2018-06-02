@@ -13,7 +13,7 @@ Transcribe will chop the music up into time slices and detect the pitch of the r
 
 After recent experiments, I cut the runtime of the McLeod Pitch Method implementation by more than half, by using Numba and Scipy.
 
-Read about them [here](http://sevag.xyz/post/snac2/) and [here](http://sevag.xyz/post/snac3/).
+Read about it [here](http://sevag.xyz/post/snac2/).
 
 ### System dependencies
 
