@@ -59,8 +59,15 @@ dependencies:
   - llvmlite=0.23.0rc1=py36hf484d3e_0
   - numba=0.38.0rc1=np114py36hf484d3e_0
   - pip:
+    - appdirs==1.4.3
+    - attrs==18.1.0
+    - black==18.6b4
     - cairocffi==0.8.0
+    - click==6.7
     - profilehooks==1.10.0
     - pydub==0.21.0
-prefix: /home/sevagh/miniconda3/envs/transcribe-venv
+    - toml==0.9.4
+    - transcribe==0.0.1
+    - xar==18.7.12
+prefix: /home/sevagh/.conda/envs/transcribe-venv
 

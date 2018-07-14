@@ -17,6 +17,8 @@ Read about it [here](http://sevag.xyz/post/snac2/).
 
 ### System dependencies
 
-This project uses Conda.
+This project uses Conda for development. On Fedora: `sudo dnf install cairo-devel libffi-devel python3-tkinter ffmpeg ffmpeg-devel`
 
-On Fedora: `sudo dnf install cairo-devel libffi-devel python3-tkinter ffmpeg ffmpeg-devel`
+#### xar
+
+Additional system dependencies for playing around with https://github.com/facebookincubator/xar: `sudo dnf install squashfs-tools squashfuse`
