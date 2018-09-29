@@ -7,13 +7,7 @@ Transcribe will chop the music up into time slices and detect the pitch of the r
 	/home/sevagh/repos/transcribe/'Guitar Tuning Standard EADGBE-bKS_m7JObxg.m4a'
 ```
 
-<img src="./samples/guitar_eadgbe_out.png" width=300px>
-
-## Performance
-
-After recent experiments, I cut the runtime of the McLeod Pitch Method implementation by more than half, by using Numba and Scipy.
-
-Read about it [here](http://sevag.xyz/post/snac2/).
+<img src="./.github/guitar_eadgbe_out.png" width=300px>
 
 ### System dependencies
 
@@ -22,3 +16,9 @@ This project uses Conda for development. On Fedora: `sudo dnf install cairo-deve
 #### xar
 
 Additional system dependencies for playing around with https://github.com/facebookincubator/xar: `sudo dnf install squashfs-tools squashfuse`
+
+### Additional reading
+
+* [Speeding up real-time pitch detection with FFT autocorrelation](./doc/snac.md)
+* [Speeding up numpy-based pitch detection with numba and scipy](./doc/snac2.md)
+* [Packaging Python code with XAR](./doc/xar.md)
